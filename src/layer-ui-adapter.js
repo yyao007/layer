@@ -50,7 +50,6 @@ LayerUI.registerMessageComponent('layer-message-sound', {
             this.appendChild(audio);
 
         } else if (!this.rendered) {
-            console.log(part.url);
             part.fetchContent();
         }
     },
