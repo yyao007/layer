@@ -1,0 +1,64 @@
+<template>
+  <style>
+    my-layer-avatar {
+      border: solid 1px #ccc;
+      padding: 5px 8px;
+      height: 1.3em;
+      border-radius: 4px;
+      box-shadow: 2px 2px 6px #ccc;
+      cursor: pointer;
+    }
+    my-layer-avatar:hover {
+      box-shadow: 2px 2px 3px #ccc;
+    }
+  </style>
+  <div class='name' layer-id='myname'></div>
+  <button class='zoom' layer-id='mybutton'>More Info</button>
+</template>
+<script>
+layerUI.registerComponent('my-layer-avatar', {
+  properties: {
+    // Avatar takes an array of Users as its key property. Before replacing a component you need to know what properties will be passed to it
+    // from its parent components.
+    users: {
+      set: function(value) {
+        this.renderUsers();
+      }
+    }
+  },
+  methods: {
+    // This method is called by the constructor
+    onCreate: function() {
+        console.log(this);
+      // the nodes object is setup using the layer-id attribute
+      this.nodes.mybutton.addEventListener('click', this.onClick.bind(this));
+    },
+
+    // Called when the user clicks the button
+    onClick: function() {
+      var user = this.users[0].toObject();
+      var text = '';
+      Object.keys(user).forEach(function(keyName) {
+        text += keyName + ': ' + user[keyName] + '\n';
+      });
+
+      // Show an alert with all known info about this user.  OK, a dialog Would be nicer here...
+      alert(text);
+    },
+
+    // Called any time the `users` is set (should only happen once in a Message Item, but many times for a Conversation Item
+    renderUsers: function() {
+      var user = this.properties.users[0];
+      if (user) {
+        this.nodes.myname.innerHTML = user.firstName || user.displayName.replace(/\S.*$/, '');
+      }
+    }
+  }
+});
+
+// Initialize the template for this component. See examples elsewhere for full registerTemplate usage.
+layerUI.registerTemplate('my-layer-avatar');
+
+// Tag isn't registered with document until init is called
+
+</script>

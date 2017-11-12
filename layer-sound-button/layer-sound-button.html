@@ -1,0 +1,104 @@
+<template>
+  <style>
+    layer-sound-button {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin: 0 5px;
+    }
+    /* Inspired by http://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/ */
+    layer-sound-button .sound-wave {
+      display: none;
+    }
+
+    layer-sound-button .sound-wave.active {
+      display: block;
+      margin-bottom: 0.5rem;
+      height: 60px;
+    }
+
+    layer-sound-button .record {
+      color: #C3CDD4;
+      font-size: 2.5rem;
+      display: block;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    layer-sound-button:hover .record {
+        color: #000;
+    }
+
+    layer-sound-button .record.active {
+        color: red;
+    }
+
+
+  </style>
+  <button class="record" layer-id='microphone'><i class="fa fa-microphone" aria-hidden="true"></i></button>
+  <canvas class="sound-wave" layer-id='wave'></canvas>
+</template>
+<script>
+    layerUI.registerComponent('layer-sound-button', {
+        properties: {
+            conversation: {
+                set(value) {
+                    if (value) this.client = value.getClient();
+                },
+            },
+        },
+        methods: {
+            // This method is called by the constructor
+            onCreate: function() {
+                // the nodes object is setup using the layer-id attribute
+                this.addEventListener('click', this.onClick.bind(this));
+                this.chunks = [];
+                this.getUserMedia();
+            },
+
+            getUserMedia: function() {
+                navigator.mediaDevices.getUserMedia = navigator.mediaDevices.getUserMedia ||
+                                navigator.mediaDevices.webkitGetUserMedia ||
+                                navigator.mediaDevices.mozGetUserMedia ||
+                                navigator.mediaDevices.msGetUserMedia;
+                if(navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                        this.recorder = new MediaRecorder(stream);
+                        // console.log("created recorder");
+                        this.record = document.querySelector('.record');
+                        this.recorder.ondataavailable = e => {
+                            this.chunks.push(e.data);
+                        }
+                        this.recorder.onstop = e => {
+                            const blob = new Blob(this.chunks, {'type': 'audio/ogg'});
+                            this.chunks = [];
+                            const parts = [{
+                                mimeType: 'audio/ogg',
+                                body: blob
+                            }]
+                            this.trigger('layer-sound-recorded', { parts });
+                        }
+                    }, err => {
+                        console.log('The following gUM error occured: ' + err);
+                    });
+                } else {
+                    console.log('getUserMedia not supported on your browser!');
+                }
+            },
+
+            // Called when the user clicks the button
+            onClick: function() {
+                if (this.recorder.state === "inactive") {
+                    this.recorder.start();
+                    console.log(this.recorder.state);
+                } else if (this.recorder.state === "recording") {
+                    this.recorder.stop();
+                    console.log(this.recorder.state);
+                }
+                this.record.classList.toggle("active");
+            },
+        }
+    });
+    layerUI.registerTemplate('layer-sound-button');
+</script>
